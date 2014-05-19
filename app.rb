@@ -1,5 +1,6 @@
 require 'bundler/setup'
 Bundler.require :app
+require File.expand_path('../lib/ws/sinatra-websocket', __FILE__)
 
 class App < Sinatra::Base
     Bundler.require environment
@@ -58,4 +59,24 @@ class App < Sinatra::Base
         erb :index
     end
 
+    set :sockets, []
+    get '/io' do
+        if request.websocket?
+            request.websocket do |ws|
+                ws.onopen do
+                    ws.send("Hello World!")
+                    settings.sockets << ws
+                end
+                ws.onmessage do |msg|
+                    EM.next_tick { settings.sockets.each{|s| s.send(msg) } }
+                end
+                ws.onclose do
+                    warn("websocket closed")
+                    settings.sockets.delete(ws)
+                end
+            end
+        else
+            erb :io
+        end
+    end
 end
