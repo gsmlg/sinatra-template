@@ -6,7 +6,7 @@ class App < Sinatra::Base
     require 'sinatra/cookies'
 
     configure do
-        set :root, File.expand_path('..', __FILE__)
+        set :root, File.dirname(__FILE__)
         set :sprockets, Sprockets::Environment.new(root)
 
         set :assets_prefix, 'assets'
@@ -22,9 +22,17 @@ class App < Sinatra::Base
         end
 
         %w(javascript stylesheet image font).each do |type|
-            sprockets.append_path root + "/assets/#{type}"
+            sprockets.append_path root + "/app/#{type}"
             sprockets.append_path root + "/vendor/#{type}"
+            sprockets.append_path root + "/lib/#{type}"
         end
+
+        %w(compass blueprint).each do |name|
+            sprockets.append_path Compass.base_directory + "/framworks/#{name}/stylesheets"
+            sprockets.append_path Compass.base_directory + "/framworks/#{name}/stylesheets"
+        end
+
+        Compass.configuration.images_path = root + '/app/image'
     end
 
     configure :development do
@@ -32,6 +40,10 @@ class App < Sinatra::Base
 
         use BetterErrors::Middleware
         BetterErrors.application_root = root
+    end
+
+    configure :test do
+
     end
 
     configure :production do
